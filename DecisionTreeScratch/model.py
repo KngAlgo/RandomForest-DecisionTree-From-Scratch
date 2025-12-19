@@ -122,8 +122,39 @@ class DecisionTree():
             return self._predict_sample(sample, node.right)
 
 class RandomForest():
-    def __init__(self):
-        pass
+    def __init__(self, n_trees=10, max_depth=None, min_samples_split=2, max_features=None):
+        self.n_trees = n_trees
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.max_features = max_features
+        self.trees = []
+        
+    def fit(self, X, y):
+        for i in range(self.n_trees):
+            indices = np.random.choice(len(X), size=len(X), replace=True)
+            x_sample = X[indices]
+            y_sample = y[indices]
+            tree = DecisionTree(max_depth=self.max_depth, min_samples_split=self.min_samples_split)
+            tree.fit(x_sample, y_sample)
+            self.trees.append(tree)
+
+    def predict(self, X):
+        preds = []
+        for i in self.trees:
+            pred = i.predict(X)
+            preds.append(pred)
+
+        preds = np.array(preds).T
+
+        final_preds = []
+        for sample_pred in preds:
+            maj_vote = np.bincount(sample_pred).argmax()
+            final_preds.append(maj_vote)
+        
+        return np.array(final_preds)
+            
+
+
 
 if __name__ == "__main__":
     from sklearn.datasets import make_classification
