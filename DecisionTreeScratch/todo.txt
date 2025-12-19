@@ -1,0 +1,32 @@
+1. Node class
+- represents each node in the tree (stores features, threshold, children, or leaf value)
+
+2. Splitting Logic
+- calculate impurity metrics (gini/entropy for classification, mse for regression)
+
+3. Best split finder
+- iterate through features and thresholds to find optimal split
+
+4. Recursive tree builder
+- recursively split data until stopping criteria met
+
+5. Stopping criteria
+- max depth, min samples split, min samples leaf, pure node
+
+6. Prediction method
+- Traverse tree from root to leaf for new samples
+
+Random Forest Part: 
+
+Bootstrap sampling
+- randomly sample data with replacement for each tree
+
+Featyre sampling
+- randomly select subset of features at each split
+
+Multiple tree training
+- Train "N" decision trees with randomness
+
+Aggregation
+- majority vote (classification) or average (regression)
+
