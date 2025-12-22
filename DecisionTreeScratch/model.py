@@ -18,16 +18,21 @@ def information_gain(parent_labels, left_labels, right_labels):
     weighted_gini = (len(left_labels)/n_total * left_gini) + (len(right_labels)/n_total * right_gini)
     return parent_gini - weighted_gini
 
-def find_best_split(X, y):
+def find_best_split(X, y, max_features=None):
     # X is a 2D numpy array (rows = samples, columns = features)
     # y is a 1D numpy array of labels
     
     best_gain = -1
     best_feature = None
     best_threshold = None
+
+    if max_features is None:
+        feature_indices = range(X.shape[1])
+    else:
+        feature_indices = np.random.choice(range(X.shape[1]), size=max_features, replace=False)
     
     # Loop through each feature (column)
-    for feature_idx in range(X.shape[1]):
+    for feature_idx in feature_indices:
         # Get all unique values in this feature as potential thresholds
         thresholds = np.unique(X[:, feature_idx])
         
@@ -51,10 +56,6 @@ def find_best_split(X, y):
     return best_feature, best_threshold
 
 
-
-
-
-
 class Node():
     def __init__(self, feature_idx=None, threshold=None, left=None, right=None, value=None):
         self.feature_idx = feature_idx # which feature to split on
@@ -68,10 +69,11 @@ class Node():
 
 
 class DecisionTree():
-    def __init__(self, max_depth=None, min_samples_split=2):
+    def __init__(self, max_depth=None, min_samples_split=2, max_features=None):
         self.max_depth = max_depth # Max depth of tree
         self.min_samples_split = min_samples_split # min samples needed to split
         self.root = None # Root Node, gets value after fitting
+        self.max_features = max_features
 
     def fit(self, X, y):
         self.root = self._build_tree(X, y)
@@ -86,7 +88,7 @@ class DecisionTree():
             leaf_value = np.bincount(y).argmax() # finds number of majority class
             return Node(value=leaf_value) # returns a leaf node of the classes
         
-        best_feature, best_threshold = find_best_split(X, y) # finds the best feature and threshold using our data and find_best_split function
+        best_feature, best_threshold = find_best_split(X, y, max_features=self.max_features) # finds the best feature and threshold using our data and find_best_split function
 
         # If no good split found, return leaf
         if best_feature is None:
@@ -134,7 +136,7 @@ class RandomForest():
             indices = np.random.choice(len(X), size=len(X), replace=True)
             x_sample = X[indices]
             y_sample = y[indices]
-            tree = DecisionTree(max_depth=self.max_depth, min_samples_split=self.min_samples_split)
+            tree = DecisionTree(max_depth=self.max_depth, min_samples_split=self.min_samples_split, max_features=self.max_features)
             tree.fit(x_sample, y_sample)
             self.trees.append(tree)
 
@@ -161,8 +163,8 @@ if __name__ == "__main__":
     from sklearn.model_selection import train_test_split
     
     # Create a simple dataset
-    X, y = make_classification(n_samples=100, n_features=4, n_informative=3, 
-                               n_redundant=1, random_state=42)
+    X, y = make_classification(n_samples=1000, n_features=10, n_informative=7, 
+                               n_redundant=2, random_state=42)
     
     # Split into train and test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -179,3 +181,20 @@ if __name__ == "__main__":
     print(f"Decision Tree Accuracy: {accuracy:.2f}")
     print(f"Predictions: {predictions[:10]}")
     print(f"Actual:      {y_test[:10]}")
+
+# Train the Random Forest
+print("\n" + "="*50)
+forest = RandomForest(n_trees=10, max_depth=5, max_features=3)
+forest.fit(X_train, y_train)
+
+# Make predictions
+rf_predictions = forest.predict(X_test)
+
+# Calculate accuracy
+rf_accuracy = np.mean(rf_predictions == y_test)
+print(f"Random Forest Accuracy: {rf_accuracy:.2f}")
+print(f"Predictions: {rf_predictions[:10]}")
+print(f"Actual:      {y_test[:10]}")
+
+print("\n" + "="*50)
+print(f"Improvement: {rf_accuracy - accuracy:.2f}")
